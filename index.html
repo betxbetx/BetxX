@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>BetX — Online Gaming</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: '#0b0f1a',
+          card: '#12182b',
+          neon: '#00ffc6',
+          neon2: '#8a5cff'
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  html, body { height: 100%; background:#0b0f1a; color:#e6e6e6; font-family: ui-sans-serif, system-ui, -apple-system;}
+  .screen { display:none; }
+  .screen.active { display:block; }
+  .card {
+    background: linear-gradient(135deg, rgba(18,24,43,.9), rgba(18,24,43,.6));
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 16px; padding:18px; transition: transform .15s ease, box-shadow .15s ease;
+    box-shadow: 0 10px 24px rgba(0,0,0,.35);
+  }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(0,0,0,.45); }
+  .btn {
+    padding:10px 14px; border-radius:12px; font-weight:600; border:1px solid rgba(255,255,255,.08);
+    background:linear-gradient(135deg, rgba(0,255,198,.15), rgba(138,92,255,.15));
+    backdrop-filter: blur(6px);
+  }
+  .btn:disabled { opacity:.5; cursor:not-allowed;}
+  .pill { border-radius:999px; }
+  .neon-text { text-shadow: 0 0 12px rgba(0,255,198,.6); }
+  .grid-5 { display:grid; grid-template-columns: repeat(5, 1fr); gap:10px;}
+  .tile { aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; border-radius:12px; cursor:pointer;
+          background:#0f1526; border:1px solid rgba(255,255,255,.06); user-select:none; }
+  .tile.revealed { background:#0d1b2a; }
+  .badge { font-size:12px; opacity:.9; }
+</style>
+</head>
+
+<body class="min-h-full">
+  <div class="max-w-5xl mx-auto p-4 md:p-6">
+    <header class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-2">
+        <div class="text-2xl">🎰</div>
+        <h1 class="text-xl md:text-2xl font-bold"><span class="neon-text">BetX</span> — Online Gaming</h1>
+      </div>
+      <div id="userBar" class="hidden items-center gap-3">
+        <span class="text-sm opacity-80">
+          <span id="helloUser">Hi, --</span> • A/C <span id="helloAcc">--</span> •
+          <span id="helloBal" class="font-semibold">0</span> 💰
+        </span>
+        <button id="btnRefreshBal" class="btn text-sm">⟳</button>
+        <button id="btnSwitch" class="btn text-sm">Switch</button>
+        <button id="btnLogout" class="btn text-sm">Logout</button>
+      </div>
+    </header>
+
+    <section id="authScreen" class="screen active">
+      <div class="max-w-md mx-auto card">
+        <h2 class="text-2xl font-bold mb-2">Login / Register</h2>
+        <p class="text-sm opacity-80 mb-4">One account per device enforced 🔒</p>
+
+        <label class="block text-sm mb-1">Username</label>
+        <input id="authUsername" class="w-full mb-3 p-3 bg-[#0f1526] border border-white/10 rounded-lg" placeholder="e.g. Aadarsh" />
+
+        <label class="block text-sm mb-1">Email</label>
+        <input id="authEmail" type="email" class="w-full mb-3 p-3 bg-[#0f1526] border border-white/10 rounded-lg" placeholder="you@mail.com" />
+
+        <label class="block text-sm mb-1">Password</label>
+        <input id="authPassword" type="password" class="w-full mb-4 p-3 bg-[#0f1526] border border-white/10 rounded-lg" placeholder="••••••••" />
+
+        <div class="flex gap-2">
+          <button id="btnRegister" class="btn w-full">Create Account</button>
+          <button id="btnLogin" class="btn w-full">Login</button>
+        </div>
+
+        <div class="mt-4 text-xs opacity-70">
+          By continuing you agree to our <b>Terms of Service</b>. All gameplay is for entertainment purposes only.
+        </div>
+      </div>
+    </section>
+
+    <section id="homeScreen" class="screen">
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="card">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-semibold mb-1">Wallet</h3>
+              <div class="text-3xl font-black" id="homeBalance">0</div>
+              <div class="text-xs opacity-70">Stored securely • Syncs across devices</div>
+            </div>
+            <div class="text-3xl">💰</div>
+          </div>
+
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button class="btn pill text-sm" onclick="openScreen('depositScreen')">➕ Deposit</button>
+            <button class="btn pill text-sm" onclick="openScreen('withdrawScreen')">↘ Withdraw</button>
+            <button class="btn pill text-sm" onclick="openScreen('historyScreen')">📜 History</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="text-lg font-semibold mb-3">Games</h3>
+          <div class="grid grid-cols-2 gap-3">
+            <button class="card" onclick="openScreen('minesScreen')">
+              <div class="text-3xl mb-1">💎</div>
+              <div class="font-semibold">Mines</div>
+              <div class="text-xs opacity-70">Pick safe tiles. Cash out!</div>
+            </button>
+            <button class="card" onclick="openScreen('aviatorScreen')">
+              <div class="text-3xl mb-1">✈️</div>
+              <div class="font-semibold">Aviator</div>
+              <div class="text-xs opacity-70">Don’t crash. Cash out!</div>
+            </button>
+            <button class="card" onclick="openScreen('diceScreen')">
+              <div class="text-3xl mb-1">🎲</div>
+              <div class="font-semibold">Dice</div>
+              <div class="text-xs opacity-70">Predict & roll.</div>
+            </button>
+            <button class="card" onclick="openScreen('slotsScreen')">
+              <div class="text-3xl mb-1">🎰</div>
+              <div class="font-semibold">Slots</div>
+              <div class="text-xs opacity-70">Spin 3-of-a-kind.</div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="depositScreen" class="screen">
+      <div class="card max-w-lg mx-auto">
+        <button class="btn mb-3" onclick="openScreen('homeScreen')">⬅ Back</button>
+        <h2 class="text-xl font-bold mb-2">Deposit</h2>
+        <p class="text-sm opacity-80 mb-4">Request a deposit via our official Telegram channel for swift processing.</p>
+
+        <div class="p-4 bg-[#0f1526] rounded-lg border border-white/10">
+          <div class="text-sm opacity-80 mb-2">Official Telegram (copy & DM):</div>
+          <div class="flex items-center gap-2">
+            <input id="tgUser" readonly class="w-full p-3 bg-[#0b0f1a] border border-white/10 rounded-lg" />
+            <button class="btn" onclick="copyTg()">Copy</button>
+          </div>
+        </div>
+
+        <div class="mt-4 text-sm opacity-80">
+          Please include your <b>account number</b>: <span class="font-semibold" id="depAcc">--</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="withdrawScreen" class="screen">
+      <div class="card max-w-lg mx-auto">
+        <button class="btn mb-3" onclick="openScreen('homeScreen')">⬅ Back</button>
+        <h2 class="text-xl font-bold mb-2">Withdraw</h2>
+        <p class="text-sm opacity-80">
+          Request your withdrawal via Telegram. Please include your <b>account number</b> for verification. Withdrawals are processed by our support team.
+        </p>
+      </div>
+    </section>
+
+    <section id="historyScreen" class="screen">
+      <div class="card">
+        <button class="btn mb-3" onclick="openScreen('homeScreen')">⬅ Back</button>
+        <h2 class="text-xl font-bold mb-2">Transaction History</h2>
+        <div id="historyList" class="space-y-2 text-sm"></div>
+      </div>
+    </section>
+
+    <section id="minesScreen" class="screen">
+      <div class="card">
+        <div class="flex items-center justify-between mb-3">
+          <button class="btn" onclick="openScreen('homeScreen')">⬅</button>
+          <h2 class="text-xl font-bold">💎 Mines</h2>
+          <div></div>
+        </div>
+
+        <div class="flex items-center gap-2 mb-3">
+          <input id="minesBet" class="p-2 bg-[#0f1526] border border-white/10 rounded-lg w-32" type="number" min="1" placeholder="Bet" />
+          <button id="minesStart" class="btn">Start</button>
+          <button id="minesCashout" class="btn" disabled>Cashout</button>
+        </div>
+
+        <div class="flex items-center gap-2 mb-3">
+          <span class="badge px-3 py-1 bg-white/10 pill">Mines:</span>
+          <button class="btn text-sm pill" data-mines="1">1</button>
+          <button class="btn text-sm pill" data-mines="2">2</button>
+          <button class="btn text-sm pill" data-mines="3">3</button>
+          <span class="text-xs opacity-70">More mines → higher risk/reward</span>
+        </div>
+
+        <div id="minesGrid" class="grid-5 mb-3"></div>
+        <div id="minesStatus" class="text-sm opacity-80"></div>
+      </div>
+    </section>
+
+    <section id="aviatorScreen" class="screen">
+      <div class="card">
+        <div class="flex items-center justify-between mb-3">
+          <button class="btn" onclick="openScreen('homeScreen')">⬅</button>
+          <h2 class="text-xl font-bold">✈️ Aviator</h2>
+          <div></div>
+        </div>
+
+        <div class="flex items-center gap-2 mb-3">
+          <input id="aviatorBet" class="p-2 bg-[#0f1526] border border-white/10 rounded-lg w-32" type="number" min="1" placeholder="Bet" />
+          <button id="aviatorStart" class="btn">Start</button>
+          <button id="aviatorCashout" class="btn" disabled>Cashout</button>
+        </div>
+
+        <div class="text-lg mb-2">Multiplier: <span id="aviatorMult">1.00×</span></div>
+        <div class="text-sm opacity-80">Cash out before crash to win <span id="aviatorPotential">0</span> 💰</div>
+        <div id="aviatorStatus" class="text-sm opacity-80 mt-2"></div>
+      </div>
+    </section>
+
+    <section id="diceScreen" class="screen">
+      <div class="card">
+        <div class="flex items-center justify-between mb-3">
+          <button class="btn" onclick="openScreen('homeScreen')">⬅</button>
+          <h2 class="text-xl font-bold">🎲 Dice</h2>
+          <div></div>
+        </div>
+
+        <div class="flex items-center gap-2 mb-3">
+          <input id="diceBet" class="p-2 bg-[#0f1526] border border-white/10 rounded-lg w-32" type="number" min="1" placeholder="Bet" />
+          <select id="dicePick" class="p-2 bg-[#0f1526] border border-white/10 rounded-lg">
+            <option value="over">Over 3.5 (×1.9)</option>
+            <option value="under">Under 3.5 (×1.9)</option>
+          </select>
+          <button id="dicePlay" class="btn">Play</button>
+        </div>
+
+        <div id="diceResult" class="text-sm opacity-80"></div>
+      </div>
+    </section>
+
+    <section id="slotsScreen" class="screen">
+      <div class="card">
+        <div class="flex items-center justify-between mb-3">
+          <button class="btn" onclick="openScreen('homeScreen')">⬅</button>
+          <h2 class="text-xl font-bold">🎰 Slots</h2>
+          <div></div>
+        </div>
+
+        <div class="flex items-center gap-2 mb-3">
+          <input id="slotsBet" class="p-2 bg-[#0f1526] border border-white/10 rounded-lg w-32" type="number" min="1" placeholder="Bet" />
+          <button id="slotsSpin" class="btn">Spin</button>
+        </div>
+
+        <div class="text-3xl font-bold mb-1" id="slotsReels">— • — • —</div>
+        <div id="slotsStatus" class="text-sm opacity-80"></div>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script>
+  // ========= CONFIG =========
+  const TELEGRAM_USERNAME = "@YourTelegram"; // <-- IMPORTANT: Set your Telegram username here
+  const DEVICE_LOCK_KEY = "betx_account_number";
+
+  // Implemented your Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyChhpAI9dKSinSqopaUHqwRSKxCRiwy92Q",
+    authDomain: "betx-5852a.firebaseapp.com",
+    projectId: "betx-5852a",
+    storageBucket: "betx-5852a.appspot.com",
+    messagingSenderId: "1034960375081",
+    appId: "1:1034960375081:web:895d96c37d13e236fc7b38",
+    measurementId: "G-X8SD5DC9RY"
+  };
+
+  // ========= Firebase =========
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // ========= State =========
+  let current = { uid:null, accountNumber:null, username:null, balance:0 };
+
+  // ========= UI Helpers =========
+  const qs = sel => document.querySelector(sel);
+  const qsa = sel => Array.from(document.querySelectorAll(sel));
+  function openScreen(id) {
+    qsa('.screen').forEach(s => s.classList.remove('active'));
+    qs('#' + id).classList.add('active');
+    if (id === 'homeScreen') refreshBalance();
+    if (id === 'historyScreen') loadHistory();
+  }
+  function setHeader() {
+    if (!current.uid) { qs('#userBar').classList.add('hidden'); return; }
+    qs('#userBar').classList.remove('hidden');
+    qs('#helloUser').textContent = current.username ?? '--';
+    qs('#helloAcc').textContent = current.accountNumber ?? '--';
+    qs('#helloBal').textContent = current.balance.toFixed(2);
+    qs('#homeBalance').textContent = current.balance.toFixed(2);
+    qs('#depAcc').textContent = current.accountNumber ?? '--';
+    qs('#tgUser').value = TELEGRAM_USERNAME;
+  }
+  function toast(msg){ alert(msg); }
+  function copyTg(){ navigator.clipboard.writeText(TELEGRAM_USERNAME).then(()=>toast('Copied Telegram username')); }
+
+  // ========= Account Number =========
+  function generateAccountNumber() {
+    // 10-digit, starts with 9
+    const rand = Math.floor(Math.random()*1e9).toString().padStart(9,'0');
+    return "9" + rand;
+  }
+
+  // ========= Firestore Helpers =========
+  async function getUserDoc(uid) { return db.collection('users').doc(uid).get(); }
+
+  async function createUserDoc(uid, username, email) {
+    const accountNumber = generateAccountNumber();
+    const userRef = db.collection('users').doc(uid);
+    await userRef.set({
+      accountNumber,
+      username,
+      email: email || null,
+      balance: 0,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    return accountNumber;
+  }
+
+  function logTx({accountNumber, type, amount, admin=null}) {
+    const ref = db.collection('transactions').doc();
+    return ref.set({
+      id: ref.id,
+      accountNumber,
+      type, // deposit | withdraw | bet | cashout | refund
+      amount: Number(amount),
+      date: firebase.firestore.FieldValue.serverTimestamp(),
+      admin
+    });
+  }
+
+  async function refreshBalance() {
+    if (!current.uid) return;
+    const snap = await getUserDoc(current.uid);
+    if (snap.exists) {
+      current.balance = Number(snap.data().balance || 0);
+      setHeader();
+    }
+  }
+
+  // Safe debit/credit with transaction
+  async function placeBet(amount) {
+    amount = Number(amount);
+    if (amount <= 0) throw new Error("Invalid bet.");
+    const userRef = db.collection('users').doc(current.uid);
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(userRef);
+      const bal = Number(snap.data().balance || 0);
+      if (bal < amount) throw new Error("Insufficient balance");
+      tx.update(userRef, { balance: bal - amount });
+    });
+    await logTx({ accountNumber: current.accountNumber, type: 'bet', amount });
+    await refreshBalance();
+  }
+
+  async function creditWin(amount) {
+    amount = Number(amount);
+    if (amount <= 0) return;
+    const userRef = db.collection('users').doc(current.uid);
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(userRef);
+      const bal = Number(snap.data().balance || 0);
+      tx.update(userRef, { balance: bal + amount });
+    });
+    await logTx({ accountNumber: current.accountNumber, type: 'cashout', amount });
+    await refreshBalance();
+  }
+
+  // ========= Auth + Device Lock =========
+  async function afterLogin(uid) {
+    const doc = await getUserDoc(uid);
+    if (!doc.exists) throw new Error("User profile missing.");
+    const data = doc.data();
+    // Device lock
+    const locked = localStorage.getItem(DEVICE_LOCK_KEY);
+    if (locked && locked !== data.accountNumber) {
+      // Different account already locked to this device
+      await auth.signOut();
+      throw new Error(`This device is locked to account ${locked}. Use "Switch" on the locked account or clear storage.`);
+    }
+    current = {
+      uid,
+      accountNumber: data.accountNumber,
+      username: data.username,
+      balance: Number(data.balance || 0)
+    };
+    localStorage.setItem(DEVICE_LOCK_KEY, data.accountNumber);
+    setHeader();
+    openScreen('homeScreen');
+  }
+
+  // Switch clears lock & signs out
+  async function switchAccount() {
+    localStorage.removeItem(DEVICE_LOCK_KEY);
+    await auth.signOut();
+    current = { uid:null, accountNumber:null, username:null, balance:0 };
+    setHeader();
+    openScreen('authScreen');
+  }
+
+  // ========= Event Bindings =========
+  window.addEventListener('DOMContentLoaded', () => {
+    // header buttons
+    qs('#btnLogout').addEventListener('click', async () => { await auth.signOut(); switchAccount(); });
+    qs('#btnSwitch').addEventListener('click', switchAccount);
+    qs('#btnRefreshBal').addEventListener('click', refreshBalance);
+
+    // auth buttons
+    qs('#btnRegister').addEventListener('click', async () => {
+      const username = qs('#authUsername').value.trim();
+      const email = qs('#authEmail').value.trim();
+      const pass = qs('#authPassword').value;
+      if (!username || !email || !pass) return toast("Fill username, email and password.");
+      try {
+        // Registration allowed only if no device lock OR same account later.
+        if (localStorage.getItem(DEVICE_LOCK_KEY)) {
+          return toast("Device already locked to an account. Use Switch to clear.");
+        }
+        const cred = await auth.createUserWithEmailAndPassword(email, pass);
+        const accountNumber = await createUserDoc(cred.user.uid, username, email);
+        await afterLogin(cred.user.uid);
+        toast(`Welcome ${username}! Your account: ${accountNumber}`);
+      } catch(e){ toast(e.message); }
+    });
+
+    qs('#btnLogin').addEventListener('click', async () => {
+      const email = qs('#authEmail').value.trim();
+      const pass = qs('#authPassword').value;
+      if (!email || !pass) return toast("Email & password required.");
+      try {
+        const cred = await auth.signInWithEmailAndPassword(email, pass);
+        await afterLogin(cred.user.uid);
+      } catch(e){ toast(e.message); }
+    });
+
+    // ==== Mines ====
+    const minesBtns = qsa('#minesScreen [data-mines]');
+    let minesState = { active:false, mines:1, mineMap:new Set(), revealed:new Set(), bet:0, multiplier:1 };
+    minesBtns.forEach(b => b.addEventListener('click', () => {
+      minesState.mines = Number(b.dataset.mines);
+      minesBtns.forEach(x => x.classList.remove('ring-2'));
+      b.classList.add('ring-2');
+    }));
+    const grid = qs('#minesGrid');
+    function resetMinesGrid() {
+      grid.innerHTML = '';
+      for (let i=0;i<25;i++){
+        const t = document.createElement('div');
+        t.className = 'tile';
+        t.dataset.index = i;
+        t.textContent = '❓';
+        t.addEventListener('click', onReveal);
+        grid.appendChild(t);
+      }
+      qs('#minesStatus').textContent = '';
+    }
+    async function startMines() {
+      if (minesState.active) return;
+      const bet = Number(qs('#minesBet').value);
+      if (!bet || bet<=0) return toast('Enter bet');
+      try {
+        await placeBet(bet);
+      } catch(e){ return toast(e.message); }
+
+      minesState = { active:true, mines:minesState.mines, mineMap:new Set(), revealed:new Set(), bet, multiplier:1 };
+      // place mines
+      while (minesState.mineMap.size < minesState.mines) {
+        minesState.mineMap.add(Math.floor(Math.random()*25));
+      }
+      resetMinesGrid();
+      qs('#minesCashout').disabled = false;
+      qs('#minesStatus').textContent = 'Game started. Pick safe tiles!';
+    }
+    function onReveal(e){
+      if (!minesState.active) return;
+      const i = Number(e.currentTarget.dataset.index);
+      if (minesState.revealed.has(i)) return;
+      const tile = e.currentTarget;
+      tile.classList.add('revealed');
+
+      if (minesState.mineMap.has(i)) {
+        tile.textContent = '💥';
+        qs('#minesStatus').textContent = 'Boom! You lost.';
+        minesState.active = false;
+        qs('#minesCashout').disabled = true;
+      } else {
+        tile.textContent = '💎';
+        minesState.revealed.add(i);
+        // simple multiplier growth
+        minesState.multiplier = (1 + minesState.revealed.size * (0.2 + (minesState.mines-1)*0.15));
+        qs('#minesStatus').textContent = `Safe! Cashout now for ${(minesState.bet*minesState.multiplier).toFixed(2)} 💰 (×${minesState.multiplier.toFixed(2)})`;
+      }
+    }
+    async function cashoutMines(){
+      if (!minesState.active) return;
+      const win = Number((minesState.bet * minesState.multiplier).toFixed(2));
+      minesState.active = false;
+      qs('#minesCashout').disabled = true;
+      await creditWin(win);
+      qs('#minesStatus').textContent = `Cashed out: ${win} 💰`;
+      resetMinesGrid();
+    }
+    qs('#minesStart').addEventListener('click', startMines);
+    qs('#minesCashout').addEventListener('click', cashoutMines);
+    resetMinesGrid();
+
+    // ==== Aviator ====
+    let avi = { active:false, bet:0, mult:1, timer:null, crashAt: 0 };
+    function updateAviUI(){
+      qs('#aviatorMult').textContent = avi.mult.toFixed(2) + '×';
+      const potential = avi.active ? (avi.bet * avi.mult).toFixed(2) : 0;
+      qs('#aviatorPotential').textContent = potential;
+    }
+    async function startAviator(){
+      if (avi.active) return;
+      const bet = Number(qs('#aviatorBet').value);
+      if (!bet || bet<=0) return toast('Enter bet');
+      try { await placeBet(bet); } catch(e){ return toast(e.message); }
+
+      avi = { active:true, bet, mult:1, timer:null, crashAt: 1 + Math.random()*4 };
+      qs('#aviatorCashout').disabled = false;
+      qs('#aviatorStatus').textContent = 'Flying...';
+      updateAviUI();
+      avi.timer = setInterval(async () => {
+        if (!avi.active) return;
+        avi.mult += (Math.random()*0.2 + 0.05);
+        updateAviUI();
+        if (avi.mult >= avi.crashAt) {
+          clearInterval(avi.timer);
+          avi.active = false;
+          qs('#aviatorCashout').disabled = true;
+          qs('#aviatorStatus').textContent = `💥 Crashed at ${avi.mult.toFixed(2)}× — you lost.`;
+        }
+      }, 600);
+    }
+    async function cashoutAviator(){
+      if (!avi.active) return;
+      avi.active = false;
+      clearInterval(avi.timer);
+      const win = Number((avi.bet * avi.mult).toFixed(2));
+      qs('#aviatorCashout').disabled = true;
+      await creditWin(win);
+      qs('#aviatorStatus').textContent = `Cashed out: ${win} 💰 at ${avi.mult.toFixed(2)}×`;
+    }
+    qs('#aviatorStart').addEventListener('click', startAviator);
+    qs('#aviatorCashout').addEventListener('click', cashoutAviator);
+
+    // ==== Dice ====
+    qs('#dicePlay').addEventListener('click', async () => {
+      const bet = Number(qs('#diceBet').value);
+      const pick = qs('#dicePick').value; // over/under 3.5
+      if (!bet || bet<=0) return toast('Enter bet');
+      try { await placeBet(bet); } catch(e){ return toast(e.message); }
+
+      const roll = 1 + Math.floor(Math.random()*6);
+      const win = (pick==='over' && roll>3) || (pick==='under' && roll<4);
+      if (win) {
+        const payout = Number((bet * 1.9).toFixed(2));
+        await creditWin(payout);
+        qs('#diceResult').textContent = `🎲 Rolled ${roll}. You win ${payout} 💰`;
+      } else {
+        qs('#diceResult').textContent = `🎲 Rolled ${roll}. You lost.`;
+      }
+    });
+
+    // ==== Slots ====
+    const icons = ['🍒','🍋','💎','⭐','7️⃣','🔔'];
+    qs('#slotsSpin').addEventListener('click', async () => {
+      const bet = Number(qs('#slotsBet').value);
+      if (!bet || bet<=0) return toast('Enter bet');
+      try { await placeBet(bet); } catch(e){ return toast(e.message); }
+
+      const r = [0,0,0].map(()=> icons[Math.floor(Math.random()*icons.length)]);
+      qs('#slotsReels').textContent = `${r[0]} • ${r[1]} • ${r[2]}`;
+
+      const threeKind = (r[0]===r[1] && r[1]===r[2]);
+      const twoKind = (r[0]===r[1] || r[1]===r[2] || r[0]===r[2]);
+      if (threeKind) {
+        const payout = Number((bet * 6).toFixed(2));
+        await creditWin(payout);
+        qs('#slotsStatus').textContent = `Jackpot! 3-of-a-kind pays ${payout} 💰`;
+      } else if (twoKind) {
+        const payout = Number((bet * 2).toFixed(2));
+        await creditWin(payout);
+        qs('#slotsStatus').textContent = `Nice! 2-of-a-kind pays ${payout} 💰`;
+      } else {
+        qs('#slotsStatus').textContent = `No match — better luck.`;
+      }
+    });
+
+    // ==== History ====
+    async function loadHistory(){
+      qs('#historyList').innerHTML = 'Loading...';
+      const acc = current.accountNumber;
+      const snap = await db.collection('transactions')
+        .where('accountNumber','==',acc)
+        .orderBy('date','desc').limit(50).get();
+      const list = snap.docs.map(d => d.data());
+      qs('#historyList').innerHTML = list.map(tx => {
+        const a = Number(tx.amount).toFixed(2);
+        const t = new Date((tx.date?.toDate?.() ?? new Date()));
+        return `<div class="p-3 rounded-lg bg-white/5 flex justify-between">
+          <span class="opacity-80">${tx.type.toUpperCase()}</span>
+          <span>${a} 💰</span>
+          <span class="opacity-60 text-xs">${t.toLocaleString()}</span>
+        </div>`;
+      }).join('') || '<div class="opacity-70">No transactions yet.</div>';
+    }
+
+    // Telegram copy
+    window.copyTg = copyTg;
+
+    // auth changes
+    auth.onAuthStateChanged(async (u) => {
+      if (!u) {
+        openScreen('authScreen');
+        return;
+      }
+      try { await afterLogin(u.uid); } catch(e){ toast(e.message); }
+    });
+  });
+  </script>
+</body>
+</html>
